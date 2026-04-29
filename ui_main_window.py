@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QSlider, QTextBrowser, QDialog
 )
 from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QFont, QTextCursor
+from PyQt5.QtGui import QFont, QTextCursor, QIcon
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
 from vocabulary_db import VocabularyDB
@@ -39,8 +39,15 @@ class MainWindowUI(QMainWindow):
     
     def init_ui(self):
         """初始化界面"""
-        self.setWindowTitle("英语口语练习助手")
+        self.setWindowTitle(" ")
         self.setGeometry(100, 100, 1200, 800)
+        # 隐藏系统标题栏
+        #self.setWindowFlags(Qt.FramelessWindowHint)
+        
+        # 设置窗口图标
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images", "icon.png")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
         
         # 主部件
         main_widget = QWidget()
@@ -68,6 +75,7 @@ class MainWindowUI(QMainWindow):
     
     def _create_left_panel(self):
         """创建左侧面板"""
+
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
         
@@ -106,7 +114,7 @@ class MainWindowUI(QMainWindow):
         self.text_editor.setFont(QFont("Consolas", 12))
         self.text_editor.setPlaceholderText(
             "在这里输入或粘贴英文文本...\n\n提示：\n"
-            "- 选中文字后点击'朗读选中'可播放语音\n"
+            "- 选中文字后点击'朗读'可播放语音\n"
             "- 双击单词可添加到生词本"
         )
         self.text_editor.mouseDoubleClickEvent = self._on_double_click
@@ -119,13 +127,9 @@ class MainWindowUI(QMainWindow):
         control_group = QGroupBox("朗读控制")
         control_layout = QHBoxLayout(control_group)
         
-        btn_read_all = QPushButton("🔊 朗读全部")
-        btn_read_all.clicked.connect(self.read_all_text)
-        control_layout.addWidget(btn_read_all)
-        
-        btn_read_selected = QPushButton("🔊 朗读选中")
-        btn_read_selected.clicked.connect(self.read_selected_text)
-        control_layout.addWidget(btn_read_selected)
+        btn_read = QPushButton("🔊 朗读")
+        btn_read.clicked.connect(self.read_text)
+        control_layout.addWidget(btn_read)
         
         btn_stop = QPushButton("⏹️ 停止")
         btn_stop.clicked.connect(self.stop_reading)
@@ -149,12 +153,12 @@ class MainWindowUI(QMainWindow):
         # 翻译按钮
         trans_toolbar = QHBoxLayout()
         
-        btn_trans = QPushButton("🌐 翻译选中（英→中）")
-        btn_trans.clicked.connect(self.translate_selected)
+        btn_trans = QPushButton("🌐 翻译（英→中）")
+        btn_trans.clicked.connect(self.translate_en_to_zh)
         trans_toolbar.addWidget(btn_trans)
         
-        btn_trans_en = QPushButton("🌐 翻译选中（中→英）")
-        btn_trans_en.clicked.connect(self.translate_to_en)
+        btn_trans_en = QPushButton("🌐 翻译（中→英）")
+        btn_trans_en.clicked.connect(self.translate_zh_to_en)
         trans_toolbar.addWidget(btn_trans_en)
         
         trans_toolbar.addStretch()
@@ -163,7 +167,7 @@ class MainWindowUI(QMainWindow):
         # 翻译显示区
         self.translation_display = QTextBrowser()
         self.translation_display.setFont(QFont("Microsoft YaHei", 11))
-        self.translation_display.setMaximumHeight(150)
+        #self.translation_display.setMaximumHeight(150)
         trans_layout.addWidget(self.translation_display)
         
         return trans_group
@@ -217,53 +221,109 @@ class MainWindowUI(QMainWindow):
         """应用样式"""
         self.setStyleSheet("""
             QMainWindow {
-                background-color: #f5f5f5;
+                background: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #E3F2FD, stop:0.4 #E8F0FE,
+                    stop:0.7 #E0ECFA, stop:1 #EBF2FA
+                );
             }
             QGroupBox {
                 font-weight: bold;
-                border: 2px solid #ddd;
-                border-radius: 8px;
+                font-family: "等线";
+                font-size: 23px;
+                border: 1px solid rgba(120, 160, 200, 0.3);
+                border-radius: 10px;
                 margin-top: 10px;
-                padding-top: 10px;
-                background-color: white;
+                padding-top: 12px;
+                background-color: rgba(255, 255, 255, 230);
+                color: #2C4A6E;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
+                left: 20px;
+                padding: 0 6px;
+                color: #3D7EC7;
             }
             QPushButton {
-                padding: 8px 15px;
-                border-radius: 5px;
-                background-color: #4CAF50;
-                color: white;
+                font-family: "等线";
+                font-size: 20px;
+                padding: 9px 20px;
+                border-radius: 6px;
+                background-color: #4A9AE8;
+                color: #FFFFFF;
                 border: none;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #45a049;
+                background-color: #3A8AD8;
             }
             QPushButton:pressed {
-                background-color: #3d8b40;
+                background-color: #2A7AC8;
             }
-            QTextEdit, QTextBrowser, QLineEdit {
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                padding: 5px;
-                background-color: white;
+            QTextEdit, QTextBrowser {
+                font-family: "等线";
+                font-size: 22px;
+                border: 1px solid rgba(120, 160, 200, 0.3);
+                border-radius: 8px;
+                padding: 8px;
+                background-color: rgba(255, 255, 255, 240);
+                color: #1E3A5F;
+                selection-background-color: #4A9AE8;
+                selection-color: white;
+            }
+            QLineEdit {
+                font-family: "等线";
+                font-size: 22px;
+                border: 1px solid rgba(120, 160, 200, 0.3);
+                border-radius: 6px;
+                padding: 6px 10px;
+                background-color: rgba(255, 255, 255, 240);
+                color: #1E3A5F;
+            }
+            QLineEdit:focus {
+                border: 1px solid #4A9AE8;
+            }
+            QSlider::groove:horizontal {
+                height: 6px;
+                border-radius: 3px;
+                background: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #B8D8F0, stop:1 #90C0E0
+                );
+            }
+            QSlider::handle:horizontal {
+                background-color: #4A9AE8;
+                width: 20px;
+                height: 18px;
+                margin: -6px 0;
+                border-radius: 9px;
+            }
+            QSlider::handle:horizontal:hover {
+                background-color: #3A8AD8;
             }
             QListWidget {
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                background-color: white;
+                font-family: "等线";
+                font-size: 20px;
+                border: 1px solid rgba(120, 160, 200, 0.3);
+                border-radius: 8px;
+                background-color: rgba(255, 255, 255, 240);
+                color: #1E3A5F;
             }
             QListWidget::item {
-                padding: 5px;
-                border-bottom: 1px solid #eee;
+                padding: 20px;
+                border-bottom: 1px solid rgba(120, 160, 200, 0.15);
             }
             QListWidget::item:selected {
-                background-color: #e3f2fd;
-                color: black;
+                background-color: rgba(74, 154, 232, 40);
+                color: #2C5A8E;
+            }
+            QListWidget::item:hover {
+                background-color: rgba(74, 154, 232, 20);
+            }
+            QLabel {
+                font-family: "等线";
+                font-size: 20px;
+                color: #2C4A6E;
             }
         """)
     
@@ -273,7 +333,7 @@ class MainWindowUI(QMainWindow):
         """打开文件"""
         filepath, _ = QFileDialog.getOpenFileName(
             self, "打开文件", "", 
-            "文本文件;;所有文件 =>:" \
+            "文本文件 (*.txt);;所有文件 (*)"
         )
         if filepath:
             try:
@@ -283,20 +343,18 @@ class MainWindowUI(QMainWindow):
             except Exception as e:
                 QMessageBox.warning(self, "错误", f"无法打开文件: {e}")
     
-    def read_all_text(self):
-        """朗读全部文本"""
-        text = self.text_editor.toPlainText()
-        if text:
-            self.start_tts(text)
-    
-    def read_selected_text(self):
-        """朗读选中文本"""
+    def read_text(self):
+        """朗读文本（有选中朗读选中，无选中朗读全部）"""
         cursor = self.text_editor.textCursor()
-        text = cursor.selectedText()
-        if text:
-            self.start_tts(text)
+        selected_text = cursor.selectedText()
+        if selected_text:
+            self.start_tts(selected_text)
         else:
-            QMessageBox.information(self, "提示", "请先选中要朗读的文本")
+            text = self.text_editor.toPlainText()
+            if text:
+                self.start_tts(text)
+            else:
+                QMessageBox.information(self, "提示", "文本为空，请先输入或导入文本")
     
     def start_tts(self, text):
         """启动TTS线程"""
@@ -328,10 +386,15 @@ class MainWindowUI(QMainWindow):
         if self.tts_thread and self.tts_thread.isRunning():
             self.tts_thread.quit()
     
-    def translate_selected(self):
-        """翻译选中文本（英译中）"""
+    def translate_en_to_zh(self):
+        """翻译文本（英译中，有选中翻译选中，无选中翻译全部）"""
         cursor = self.text_editor.textCursor()
-        text = cursor.selectedText().strip()
+        selected_text = cursor.selectedText().strip()
+        if selected_text:
+            text = selected_text
+        else:
+            text = self.text_editor.toPlainText().strip()
+        
         if text:
             result = self.translator.translate(text)
             self.translation_display.setHtml(
@@ -339,12 +402,17 @@ class MainWindowUI(QMainWindow):
                 f"<p><b>译文：</b>{result}</p>"
             )
         else:
-            QMessageBox.information(self, "提示", "请先选中要翻译的文本")
+            QMessageBox.information(self, "提示", "文本为空，请先输入或导入文本")
     
-    def translate_to_en(self):
-        """翻译选中文本（中译英）"""
+    def translate_zh_to_en(self):
+        """翻译文本（中译英，有选中翻译选中，无选中翻译全部）"""
         cursor = self.text_editor.textCursor()
-        text = cursor.selectedText().strip()
+        selected_text = cursor.selectedText().strip()
+        if selected_text:
+            text = selected_text
+        else:
+            text = self.text_editor.toPlainText().strip()
+        
         if text:
             result = self.translator.translate_to_en(text)
             self.translation_display.setHtml(
@@ -352,7 +420,7 @@ class MainWindowUI(QMainWindow):
                 f"<p><b>译文：</b>{result}</p>"
             )
         else:
-            QMessageBox.information(self, "提示", "请先选中要翻译的文本")
+            QMessageBox.information(self, "提示", "文本为空，请先输入或导入文本")
     
     def _on_double_click(self, event):
         """双击事件 - 添加生词"""
@@ -415,7 +483,7 @@ class MainWindowUI(QMainWindow):
         phonetic = fetch_phonetic(word)
         
         # 显示详情
-        html = f"<h3>{word} {phonetic if phonetic else ''}</h3>"
+        html = f"<h3>{word} {phonetic if phonetic else ''}🔊</h3>"
         html += f"<p><b>释义：</b>{trans}</p>"
         html += f"<p><b>例句：</b>{example if example else '无'}</p>"
         html += f"<p><b>添加时间：</b>{add_time}</p>"
