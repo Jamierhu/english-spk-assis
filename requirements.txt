@@ -1,3 +1,5 @@
 PyQt5>=5.15.0
 edge-tts>=6.1.0
 translate>=3.6.1
+openai>=1.0.0
+Markdown>=3.4.0
